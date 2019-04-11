@@ -1,0 +1,23 @@
+{
+  "data":
+  {
+    "training": "/path/to/training.hdf",
+    "validation": "/path/to/validation.hdf",
+    "testing": "/path/to/testing.hdf",
+    "real_events": "/path/to/real_events.hdf"
+  },
+  "static_args":
+  {
+    "sample_length": 8,
+    "sampling_rate": 2048,
+    "seconds_before_event": 5.5
+  },
+  "evaluation":
+  {
+    "slack_width": 0.05
+  },
+  "model":
+  {
+    "receptive_field_size": 4096
+  }
+}
