@@ -1,3 +1,6 @@
+# Local versions of files
+*.local.*
+
 # Folders that are created by scripts
 checkpoints
 plots
