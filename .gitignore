@@ -1,3 +1,12 @@
+# Folders that are created by scripts
+checkpoints
+plots
+results
+tensorboard
+
+# Folder containing HTCondor submit files
+submit_files
+
 # PyCharm project folder
 .idea
 
