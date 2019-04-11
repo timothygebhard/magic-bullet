@@ -1,2 +1,93 @@
-# magic-bullet
-Analysis code for the research paper "Convolutional neural networks: a magic bullet for gravitational-wave detection?"
+# CNNs: A Magic Bullet for GW Detection?
+
+This repository contains the scripts that were used to produce the results presented in *Convolutional neural networks: a magic bullet for gravitational wave detection?* by Gebhard et al. (2019).
+
+
+
+### Reproducing the analysis
+
+If you want to reproduce our analysis, you will need to run the following steps:
+
+1. Produce a `training`, `validation` and `testing` dataset using the [ggwd repository](<https://github.com/timothygebhard/ggwd>), which contains a collection of useful scripts to generate synthetic gravitational-wave data. If you also want to test the performance of the trained network on real, confirmed GW events, you also want to generate a `real_events` dataset.
+
+2. Adjust the values in the `CONFIG.json` file to match your setup (e.g., set up the paths for the datasets).
+
+3. Ensure your Python environment has all the necessary dependencies specified in `requirements.txt`, for example, by running the following:
+
+   ```
+   pip install -r requirements.txt
+   ```
+
+   We would recommend to use a fresh virtual environment for this. Also, we require at least Python 3.6.
+
+4. Train the fully convolutional neural network model by running:
+
+   ```
+   python train_model.py
+   ```
+
+   During training, the current best set of weights for the network will be saved in a file `best.pth` in the `./checkpoints` directory. This checkpoint will also later be used when applying the model to make predictions (see below).
+
+   ---
+
+   **Warning:** Depending on your setup, training can take quite a while (and use a lot of memory)! For reference: Even when using 5 Tesla V-100 GPUs (with 32 GB of memory each), it took us over 30 hours to train the network for 64 epochs.
+
+   ---
+
+   **Note:** You can monitor the training progress using [TensorBoard](https://www.tensorflow.org/guide/summaries_and_tensorboard). The necessary log files are stored in the `./tensorboard` directory. To start TensorBoard, you will need to run the following line:
+
+   ```
+   tensorboard --logdir=tensorboard --port=<port>
+   ```
+
+   ---
+
+5. Apply the network to the testing dataset to make predictions:
+
+   ```
+   python apply_model.py --apply-to=testing
+   ```
+
+   This will create a file `predictions_testing.hdf` in the `./results` directory. If you have also prepared a dataset containing real events, you can analogously apply the trained network to these by running:
+
+   ```
+   python apply_model.py --apply-to=real_events
+   ```
+
+   This will then also output another file, `predictions_real_events.hdf`, to the `./results` directory.
+
+6. Next, you need to post-process the predictions on the testing dataset to count the number of detections (i.e., successfully recovered injections) and the number of false positives. To this end, run the following script:
+
+   ```
+   python find_triggers.py
+   ```
+
+   This creates a file `found_triggers.hdf` in the `./results` directory. Furthermore, it also outputs a global value (i.e., averaged over all injection SNRs) for the detection ratio and the false positive rate.
+
+7. Now you can compute the detection ratio as a function of the injection SNR, and check how the post-processing parameters (smoothing window size and thresholding value) affect the detection ratio and the (inverse) false positive rate. To this end, run the following two scripts:
+
+   ```
+   python compute_dr_over_snr.py
+   python compute_dr_over_ifpr.py
+   ```
+
+   This will create two files in the `./results` directory, named `dr_over_snr.json` and `dr_over_ifpr.json`.
+
+8. Using these JSON files, you can then plot the results from the last step by running the following:
+
+   ```
+   python plot_dr_over_snr.py
+   python plot_dr_over_ifpr.py
+   ```
+
+   The resulting plots will be saved as PDF files in the `./plots` directory.
+
+9. Independently of the last three steps, you can also simply plot the predictions of your trained model on the dataset containing real events by running:
+
+   ```
+   python plot_real_events.py
+   ```
+
+   The results are again stored in the `./plots` directory.
+
+10. 
