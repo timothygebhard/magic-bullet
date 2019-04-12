@@ -1,14 +1,14 @@
 # CNNs: A Magic Bullet for GW Detection?
 
-This repository contains the scripts that were used to produce the results presented in *Convolutional neural networks: a magic bullet for gravitational wave detection?* by Gebhard et al. (2019).
+This repository contains all scripts that were used to produce the results presented in *Convolutional neural networks: a magic bullet for gravitational-wave detection?* by Gebhard et al. (2019).
 
 
 
-### Reproducing the analysis
+## Reproducing the analysis
 
-If you want to reproduce our analysis, you will need to run the following steps:
+In case you want to reproduce our analysis, you will need to run the following steps:
 
-1. Produce a `training`, `validation` and `testing` dataset using the [ggwd repository](<https://github.com/timothygebhard/ggwd>), which contains a collection of useful scripts to generate synthetic gravitational-wave data. If you also want to test the performance of the trained network on real, confirmed GW events, you also want to generate a `real_events` dataset.
+1. Create a `training`, `validation` and `testing` dataset. We suggest using the [ggwd repository](<https://github.com/timothygebhard/ggwd>), which contains a collection of useful scripts to generate synthetic gravitational-wave data. If you also want to test the performance of the trained network on real, confirmed GW events, you also want to generate a `real_events` dataset. See the repository documentation for more information.
 
 2. Adjust the values in the `CONFIG.json` file to match your setup (e.g., set up the paths for the datasets).
 
@@ -20,7 +20,7 @@ If you want to reproduce our analysis, you will need to run the following steps:
 
    We would recommend to use a fresh virtual environment for this. Also, we require at least Python 3.6.
 
-4. Train the fully convolutional neural network model by running:
+4. Train the fully convolutional neural network model with PyTorch by running:
 
    ```
    python train_model.py
@@ -30,7 +30,8 @@ If you want to reproduce our analysis, you will need to run the following steps:
 
    ---
 
-   **Warning:** Depending on your setup, training can take quite a while (and use a lot of memory)! For reference: Even when using 5 Tesla V-100 GPUs (with 32 GB of memory each), it took us over 30 hours to train the network for 64 epochs.
+   **Warning:** Depending on your setup, training the model as described in the paper can take quite a while (and use a lot of memory)! For reference: Even when using 5 Tesla V-100 GPUs (with 32 GB of memory each), it took us over 30 hours to train the network for 64 epochs. 
+   To reduce the training time, you can decrease the number of channels by modifying the definition of the `FCNN` class in `./utils/models.py`. This may then of course also decrease the network's performance.
 
    ---
 
@@ -62,7 +63,7 @@ If you want to reproduce our analysis, you will need to run the following steps:
    python find_triggers.py
    ```
 
-   This creates a file `found_triggers.hdf` in the `./results` directory. Furthermore, it also outputs a global value (i.e., averaged over all injection SNRs) for the detection ratio and the false positive rate.
+   This creates a file `found_triggers.hdf` in the `./results` directory. Furthermore, it also outputs a global value (i.e., averaged over all injection SNRs) for the detection ratio and the false positive rate, and computes a value for how much the predicted event time deviates, on average, from the ground truth injection time.
 
 7. Now you can compute the detection ratio as a function of the injection SNR, and check how the post-processing parameters (smoothing window size and thresholding value) affect the detection ratio and the (inverse) false positive rate. To this end, run the following two scripts:
 
@@ -90,4 +91,24 @@ If you want to reproduce our analysis, you will need to run the following steps:
 
    The results are again stored in the `./plots` directory.
 
-10. 
+10. Finally, you can try to check "what you network has really learned", by looking for find preimages for a given target output through optimization. This is related to the concept of *adversarial examples*, and serves to illustrate that not every input that causes the network to predict a signal necessarily looks like a signal. To find a preimage for a particular target output, you can use:
+
+   ```
+   python find_preimage.py --constraint=<contraint> --index=<N>
+   ```
+
+   The `--constraint` parameter can be used to guide the optimization procedure, or impose additional (e.g., unphysical) constraints on the input. For our paper, we used the following `constraint` options: `gw_like`, `minimal_perturbation`, ` positive_strain`, ` zero_coalescence` and `minimal_amplitude`. The `--index` parameter specifies the index of the noise-only example from the testing dataset, which is used as a starting point for the optimization.
+
+   The results of the preimage search are stored in the `./results/preimages` directory. They can be plotted by running:
+
+   ```
+   python plot_preimages.py
+   ```
+
+   This will create a PDF for every preimage in the `./plots/preimages` directory. Note that you may have to generate multiple preimages to find one that looks as "clear" as the examples presented in our paper.
+
+   
+
+## Using this code
+
+We'd be happy to see you using our code here as a starting point for you own studies on gravitational waves and convolutional neural networks! This is why we are releasing it under a permissive license. We only ask you that if you make use of our code and publish your work, please be sure to cite our paper, and consider letting us know about it! :)
