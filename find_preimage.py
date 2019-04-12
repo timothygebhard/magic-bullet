@@ -238,31 +238,39 @@ if __name__ == '__main__':
 
         # For "GW-like" signals, we want to make sure the "signal" is located
         # near the target coalescence time, so we suppress signal components
-        # too far from this
+        # too far from this for the first 50% of the optimization process.
         if constraint == 'gw_like' and epoch < 0.5 * epochs:
             weights = 0.01 * torch.ones(6144).float()
             weights[3072 - 512:3072 + 512] = 1
             weights = smooth_weights(weights).to(device)
             signal.data = signal.data * weights
 
-        # Try to avoid a signal at the expected coalescence time
+        # When trying to find examples that only perturb the pure noise a 
+        # tiny bit, but still make the network predict a signal, it is useful
+        # to do the opposite from above and initially *prevent* the optimizer
+        # from placing a GW-like signal at the target coalescence time in 
+        # order to force it into a different local minimum. This reduces the 
+        # number of preimages we need to generate to find a good, clear 
+        # example of the phenomenon.
         if constraint == 'minimal_perturbation' and epoch < 0.8 * epochs:
             weights = torch.ones(6144).float()
             weights[3072 - 512:3072 + 512] = 0
             weights = smooth_weights(weights).to(device)
             signal.data = signal.data * weights
 
-        # To achieve minimal amplitude, we explicitly force a large part of
-        # the inputs to be zero, so that the optimization can focus on the
-        # "signal" part, which should be as small as possible.
+        # To achieve minimal amplitude, we clip the inputs into a small
+        # interval around zero (alternatively we could try to use a penalty
+        # term in the loss based on the L1/L2-norm of the inputs.
         if constraint == 'minimal_amplitude':
             inputs.data = torch.clamp(inputs.data, -0.08, 0.08)
 
-        # Set all negative strain values to zero
+        # To create a positive strain example, we pass the inputs through a
+        # ReLU function, which basically sets all negative values to 0.
         if constraint == 'positive_strain':
             inputs.data = torch.relu(inputs.data)
 
-        # Set the region around the "coalescence" to zero
+        # For the zero coalescence example, we simply force the inputs to 0
+        # in an interval around the target coalescence time.
         if constraint == 'zero_coalescence':
             weights = torch.ones(6144).float()
             weights[3072 - 256:3072 + 256] = 0
@@ -270,7 +278,7 @@ if __name__ == '__main__':
             inputs.data = inputs.data * weights
 
         # ---------------------------------------------------------------------
-        # Compute the model inputs if we are only optimizing the "signal"
+        # Compute the model inputs if we are only optimizing the "signal" part
         # ---------------------------------------------------------------------
         
         if constraint in ('gw_like', 'minimal_perturbation'):
@@ -283,7 +291,10 @@ if __name__ == '__main__':
         # Compute the forward pass through the model
         outputs = model.forward(inputs)
 
-        # Compute the loss depending on the constraint:
+        # Compute the loss. Depending on the constraint, we use a different
+        # weighting of the different loss terms. The BCE loss ensures the 
+        # input produces the desired output, the MSE loss controls how much
+        # the optimized input deviates from the original (noise-only) input.
         if constraint in ('gw_like', 'positive_strain', 'zero_coalescence'):
             loss = (1.000 * bce_loss(outputs, targets) +
                     0.175 * mse_loss(inputs, noise))
