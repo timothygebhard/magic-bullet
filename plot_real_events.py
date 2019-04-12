@@ -73,7 +73,7 @@ if __name__ == '__main__':
 
         # Set up the subplots
         width = 7 * 1.21
-        fig, axes = plt.subplots(figsize=(width, 2.1), nrows=3)
+        fig, axes = plt.subplots(figsize=(width, 2), nrows=3)
 
         # Add some horizontal lines first
         axes[0].axhline(y=0.0, ls='--', color='LightGray', lw=0.5)
