@@ -1,6 +1,6 @@
 # CNNs: A Magic Bullet for GW Detection?
 
-This repository contains all scripts that were used to produce the results presented in *Convolutional neural networks: a magic bullet for gravitational-wave detection?* by Gebhard et al. (2019).
+This repository contains all scripts that were used to produce the results presented in [*Convolutional neural networks: a magic bullet for gravitational-wave detection?*](https://arxiv.org/abs/1904.08693) by Gebhard et al. (2019) [arXiv:1904.08693, to be submitted to Physical Review X].
 
 
 
