@@ -1,5 +1,12 @@
 # CNNs: A Magic Bullet for GW Detection?
 
+
+[![Python](https://img.shields.io/badge/Python-3.6-yellow.svg)]()
+[![CodeFactor](https://www.codefactor.io/repository/github/timothygebhard/magic-bullet/badge)](https://www.codefactor.io/repository/github/timothygebhard/magic-bullet)
+[![GPLv3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://github.com/timothygebhard/magic-bullet/blob/master/LICENSE)
+[![arXiv](https://img.shields.io/badge/arXiv-1904.08693-red.svg)](https://arxiv.org/abs/1904.08693)
+[![DOI](https://zenodo.org/badge/180809281.svg)](https://zenodo.org/badge/latestdoi/180809281)
+
 This repository contains all scripts that were used to produce the results presented in [*Convolutional neural networks: a magic bullet for gravitational-wave detection?*](https://arxiv.org/abs/1904.08693) by Gebhard et al. (2019) [arXiv:1904.08693, to be submitted to Physical Review X].
 
 
