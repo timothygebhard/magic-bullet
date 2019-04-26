@@ -38,7 +38,7 @@ class InjectionDataset(torch.utils.data.Dataset):
                  sample_type: str = 'both'):
 
         # Basic sanity check: Must select valid mode
-        if mode not in ():
+        if mode not in ("training", "validation", "testing"):
             raise ValueError('mode must be one of the following:'
                              '"training", "validation" or "testing"!')
 
