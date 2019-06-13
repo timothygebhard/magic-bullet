@@ -8,7 +8,6 @@ Find triggers in post-processed model predictions on testing dataset.
 
 import h5py
 import numpy as np
-import os
 import time
 
 from utils.configfiles import get_config
@@ -46,10 +45,13 @@ if __name__ == '__main__':
     # Get the sampling rate of the examples (in Hertz)
     sampling_rate = config['static_args']['sampling_rate']
 
-    # Get the "slack width", that is, the size of the interval around the
-    # ground truth injection time in which a detection will still be counted,
-    # and convert from seconds to time steps
-    slack_width = int(config['evaluation']['slack_width'] * sampling_rate)
+    # Get the "slack widths", that is, the sizes of the interval around the
+    # ground truth injection time in which a detection will still be counted.
+    # In the research paper, this parameter is called "\Delta t".
+    # NOTE: The size is given in seconds and must be converted to time steps
+    # by multiplying with the sampling rate.
+    slack_widths = config['evaluation']['slack_width']['all']
+    slack_widths = sorted(np.unique(np.array(slack_widths).astype(float)))
 
     # Get the number of seconds before the event in the examples, and the
     # size of the receptive field of the model that was used
@@ -67,6 +69,8 @@ if __name__ == '__main__':
     # Load the predictions on the test dataset (and the injection SNRs)
     # -------------------------------------------------------------------------
 
+    print('Reading in predictions from HDF file...', end=' ', flush=True)
+
     # Keep data with and without an injection separate
     predictions = dict(injection=None, noise=None)
 
@@ -79,93 +83,153 @@ if __name__ == '__main__':
     with h5py.File(config['data']['testing'], 'r') as hdf_file:
         inj_snr = np.array(hdf_file['/injection_parameters/injection_snr'])
 
-    # -------------------------------------------------------------------------
-    # Check if an injection was recovered and count the false positives
-    # -------------------------------------------------------------------------
-
-    false_positives = dict(injection=list(), noise=list())
-
-    # Process examples containing an injection
-    print(f'Processing examples of type "injection"...', end=' ', flush=True)
-    detected_flags, false_positives['injection'] = \
-        get_detections_and_fp(predictions=predictions['injection'],
-                              event_index=event_index,
-                              slack_width=slack_width)
-    print('Done!')
-
-    # Process examples containing only noise
-    print(f'Processing examples of type "noise"...', end=' ', flush=True)
-    _, false_positives['noise'] = \
-        get_detections_and_fp(predictions=predictions['noise'],
-                              event_index=None,
-                              slack_width=None)
-    print('Done!')
+    print('Done!', flush=True)
 
     # -------------------------------------------------------------------------
-    # Compute global values for the DR and the (i)FPR
+    # Initialize the output HDF file
     # -------------------------------------------------------------------------
 
-    # Compute the global figures of merit
-    figures_of_merit = get_dr_and_fpr(detected_flags=detected_flags,
-                                      false_positives=false_positives,
-                                      sample_length=sample_length)
-    
-    # Define shortcuts to figures of merit
-    detection_ratio = figures_of_merit['detection_ratio']
-    false_positive_ratio = figures_of_merit['false_positive_ratio']
-    false_positive_rate = figures_of_merit['false_positive_rate']
+    print('Preparing output HDF file...', end=' ', flush=True)
 
-    # Print these results to the command line
-    print('\nGLOBAL FIGURES OF MERIT:')
-    print(f'Detection Ratio:               {detection_ratio:9.4f}')
-    print(f'False Positive Ratio:          {false_positive_ratio:9.4f}')
-    print(f'False Positive Rate:           {false_positive_rate:9.4f}/s')
-    print(f'Inverse False Positive Rate:   {1.0/false_positive_rate:9.4f}s')
-    print('')
+    # Define path to the output HDF file containing the candidates we find
+    output_file_path = './results/found_triggers.hdf'
+
+    # Open it once in "write" mode to make sure it is empty and create a group
+    # for every slack_width value for which we are evaluating the results
+    with h5py.File(output_file_path, 'w') as hdf_file:
+        for slack_width in slack_widths:
+            hdf_file.create_group(name=str(slack_width))
+
+    print('Done!\n', flush=True)
 
     # -------------------------------------------------------------------------
-    # Compute average distance between predicted event time and ground truth
+    # Run the whole trigger-finding procedure for different slack_width values
     # -------------------------------------------------------------------------
 
-    mean, std = \
-        get_avg_event_time_deviation(predictions=predictions['injection'],
-                                     event_index=event_index,
-                                     slack_width=slack_width,
-                                     sampling_rate=sampling_rate)
-    print(f'mean(abs(t_pred - t_true)):    {mean:.4f}s +- {std:.4f}s\n')
+    for slack_width in slack_widths:
 
-    # -------------------------------------------------------------------------
-    # Save results to an HDF file
-    # -------------------------------------------------------------------------
+        print(f'slack_width = {slack_width:.3f}s'.center(80))
+        print(80 * '-', flush=True)
 
-    # Construct path to the output file containing detections and false ps
-    results_dir = './results/'
-    output_file = os.path.join(results_dir, 'found_triggers.hdf')
+        # ---------------------------------------------------------------------
+        # Check if an injection was recovered and count the false positives
+        # ---------------------------------------------------------------------
 
-    print('Saving results to HDF file...', end=' ', flush=True)
-    with h5py.File(output_file, 'w') as hdf_file:
+        # Initialize the dictionary in which we store the results
+        false_positives = dict(injection=list(), noise=list())
 
-        # Create groups for the results
-        hdf_file.create_group(name='injection')
-        hdf_file.create_group(name='noise')
+        # Compute the slack_width in units of time steps
+        slack_width_in_time_steps = int(slack_width * sampling_rate)
 
-        # Store results for examples containing an injection
-        hdf_file['injection'].create_dataset(name='detected',
-                                             data=detected_flags)
-        hdf_file['injection'].create_dataset(name='false_positives',
-                                             data=false_positives['injection'])
-        hdf_file['injection'].create_dataset(name='injection_snr',
-                                             data=inj_snr)
+        # Process examples containing an injection
+        print(f'Processing "injection" examples...', end=' ', flush=True)
+        detected_flags, false_positives['injection'] = \
+            get_detections_and_fp(predictions=predictions['injection'],
+                                  event_index=event_index,
+                                  slack_width=slack_width_in_time_steps)
+        print('Done!')
 
-        # Store results for examples not containing an injection
-        hdf_file['noise'].create_dataset(name='false_positives',
-                                         data=false_positives['noise'])
-    print('Done!')
+        # Process examples containing only noise
+        print(f'Processing "noise" examples...', end=' ', flush=True)
+        _, false_positives['noise'] = \
+            get_detections_and_fp(predictions=predictions['noise'],
+                                  event_index=None,
+                                  slack_width=None)
+        print('Done!')
+
+        # ---------------------------------------------------------------------
+        # Compute global values for the DR and the (I)FPR
+        # ---------------------------------------------------------------------
+
+        # Compute the global figures of merit
+        figures_of_merit = get_dr_and_fpr(detected_flags=detected_flags,
+                                          false_positives=false_positives,
+                                          sample_length=sample_length)
+
+        # Define shortcuts to figures of merit
+        detection_ratio = figures_of_merit['detection_ratio']
+        false_positive_ratio = figures_of_merit['false_positive_ratio']
+        false_positive_rate = figures_of_merit['false_positive_rate']
+
+        # Print these results to the command line
+        print('\nGLOBAL FIGURES OF MERIT:')
+        print(f'Detection Ratio:              {detection_ratio:9.4f}')
+        print(f'False Positive Ratio:         {false_positive_ratio:9.4f}')
+        print(f'False Positive Rate:          {false_positive_rate:9.4f}/s')
+        print(f'Inverse False Positive Rate:  {1 / false_positive_rate:9.4f}s')
+        print('')
+
+        # ---------------------------------------------------------------------
+        # Compute mean distance between predicted event time and ground truth
+        # ---------------------------------------------------------------------
+
+        mean, std = \
+            get_avg_event_time_deviation(predictions=predictions['injection'],
+                                         event_index=event_index,
+                                         slack_width=slack_width_in_time_steps,
+                                         sampling_rate=sampling_rate)
+        print(f'mean(abs(t_pred - t_true)):   {mean:.4f}s +- {std:.4f}s\n')
+
+        # ---------------------------------------------------------------------
+        # Save results for this slack_width value to the HDF file
+        # ---------------------------------------------------------------------
+
+        print('Saving results to HDF file...', end=' ', flush=True)
+
+        with h5py.File(output_file_path, 'a') as hdf_file:
+
+            # -----------------------------------------------------------------
+            # Create groups for the results
+            # -----------------------------------------------------------------
+
+            hdf_file[str(slack_width)].create_group(name='figures_of_merit')
+            hdf_file[str(slack_width)].create_group(name='injection')
+            hdf_file[str(slack_width)].create_group(name='noise')
+
+            # -----------------------------------------------------------------
+            # Store global figures of merit as group attributes
+            # -----------------------------------------------------------------
+
+            group = hdf_file[str(slack_width)]['figures_of_merit']
+
+            group.attrs.create(name='detection_ratio',
+                               data=detection_ratio)
+            group.attrs.create(name='false_positive_ratio',
+                               data=false_positive_ratio)
+            group.attrs.create(name='false_positive_rate',
+                               data=false_positive_rate)
+            group.attrs.create(name='mean_time_deviation',
+                               data=mean)
+            group.attrs.create(name='std_time_deviation',
+                               data=std)
+
+            # -----------------------------------------------------------------
+            # Store results for examples containing an injection
+            # -----------------------------------------------------------------
+
+            group = hdf_file[str(slack_width)]['injection']
+
+            group.create_dataset(name='detected',
+                                 data=detected_flags)
+            group.create_dataset(name='false_positives',
+                                 data=false_positives['injection'])
+            group.create_dataset(name='injection_snr',
+                                 data=inj_snr)
+
+            # -----------------------------------------------------------------
+            # Store results for examples not containing an injection
+            # -----------------------------------------------------------------
+
+            group = hdf_file[str(slack_width)]['noise']
+
+            group.create_dataset(name='false_positives',
+                                 data=false_positives['noise'])
+
+        print('Done!\n' + 80 * '-' + '\n\n', flush=True)
 
     # -------------------------------------------------------------------------
     # Postliminaries
     # -------------------------------------------------------------------------
 
-    print('')
     print(f'This took {time.time() - script_start:.1f} seconds!')
     print('')
