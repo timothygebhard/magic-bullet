@@ -1,6 +1,6 @@
 """
 Compute the detection ratio (DR) and the inverse false positive rate
-(iFPR) for different post-processing parameters and save the results.
+(IFPR) for different post-processing parameters and save the results.
 """
 
 # -----------------------------------------------------------------------------
@@ -27,7 +27,7 @@ if __name__ == '__main__':
     # -------------------------------------------------------------------------
 
     print('')
-    print('COMPUTE DR AND iFPR FOR DIFFERENT POST-PROCESSING PARAMETERS')
+    print('COMPUTE DR AND IFPR FOR DIFFERENT POST-PROCESSING PARAMETERS')
     print('')
 
     # Start the stopwatch
@@ -49,7 +49,8 @@ if __name__ == '__main__':
     # Get the "slack width", that is, the size of the interval around the
     # ground truth injection time in which a detection will still be counted,
     # and convert from seconds to time steps
-    slack_width = int(config['evaluation']['slack_width'] * sampling_rate)
+    slack_width = config['evaluation']['slack_width']['default']
+    slack_width = int(slack_width * sampling_rate)
 
     # Get the number of seconds before the event in the examples, and the
     # size of the receptive field of the model that was used
