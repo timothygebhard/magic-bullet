@@ -76,11 +76,11 @@ if __name__ == '__main__':
         fig, axes = plt.subplots(figsize=(width, 2), nrows=3)
 
         # Add some horizontal lines first
-        axes[0].axhline(y=0.0, ls='--', color='LightGray', lw=0.5)
-        axes[1].axhline(y=0.0, ls='--', color='LightGray', lw=0.5)
-        axes[2].axhline(y=0.0, ls='--', color='LightGray', lw=0.5)
-        axes[2].axhline(y=0.5, ls='--', color='LightGray', lw=0.5)
-        axes[2].axhline(y=1.0, ls='--', color='LightGray', lw=0.5)
+        axes[0].axhline(y=0.0, ls='-', color='#D9D9D9', lw=0.5)
+        axes[1].axhline(y=0.0, ls='-', color='#D9D9D9', lw=0.5)
+        axes[2].axhline(y=0.0, ls='-', color='#D9D9D9', lw=0.5)
+        axes[2].axhline(y=0.5, ls='-', color='#D9D9D9', lw=0.5)
+        axes[2].axhline(y=1.0, ls='-', color='#D9D9D9', lw=0.5)
 
         # Get the strain data for the event
         dataset = RealEventDataset(event=event)
@@ -120,8 +120,7 @@ if __name__ == '__main__':
         # ---------------------------------------------------------------------
 
         # Set up axes labels
-        axes[2].set_xlabel('Time from Center-of-Earth time (in seconds)',
-                           fontsize=8)
+        axes[2].set_xlabel('Time from Center-of-Earth time (s)', fontsize=8)
         axes[0].set_ylabel('H1', fontsize=8)
         axes[1].set_ylabel('L1', fontsize=8)
         axes[2].set_ylabel('CNN', fontsize=8)
