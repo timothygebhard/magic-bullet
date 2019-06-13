@@ -12,6 +12,7 @@ import os
 import pandas as pd
 import time
 
+from matplotlib.lines import Line2D
 from pathlib import Path
 
 
@@ -59,9 +60,14 @@ if __name__ == '__main__':
     # Set up the subplots
     fig, ax = plt.subplots(nrows=1)
 
+    # Define the markers we will be using for the plot (and make it cyclic)
+    def markers(index):
+        markers_ = ['o', 'v', 'P', 's', 'D', 'x']
+        return markers_[index % len(markers_)]
+
     # Plot a line for every threshold value
     print('Creating plot...', end=' ', flush=True)
-    for threshold in thresholds:
+    for i, threshold in enumerate(thresholds):
 
         # Select the line for this threshold value
         line = dataframe[dataframe['threshold'] == threshold]
@@ -75,15 +81,12 @@ if __name__ == '__main__':
             X.append(datapoint['ifp_rate'].values[0])
             Y.append(datapoint['det_ratio'].values[0])
 
-        # Plot the line
-        p = ax.plot(X, Y, lw=1, label='Threshold {}'.format(threshold))
-
         # Annotate each data point with corresponding the window size
         for x, y, window_size in zip(X, Y, window_sizes):
-            ax.plot(x, y, marker='x', markersize=5, color=p[-1].get_color())
-            ax.annotate('{}'.format(window_size), xy=(x, y), xytext=(0, -6),
+            ax.plot(x, y, color=f'C{i}', marker=markers(i), ms=3, mew=0.5)
+            ax.annotate('{}'.format(window_size), xy=(x, y), xytext=(0, -5.5),
                         ha='center', va='center', textcoords='offset points',
-                        fontsize=4.5, color=p[-1].get_color())
+                        fontsize=4.5, color=f'C{i}')
     print('Done!', flush=True)
 
     # -------------------------------------------------------------------------
@@ -98,23 +101,28 @@ if __name__ == '__main__':
     plt.xscale('log')
 
     # Set up axes labels
-    plt.xlabel('Inverse False Positive Rate (in seconds)', fontsize=8)
+    plt.xlabel('Inverse False Positive Rate (s)', fontsize=8)
     plt.ylabel('Detection Ratio', fontsize=8)
 
     # Put a grid on the plot
-    plt.grid(which='both', ls='--', alpha=0.35, lw=0.5)
+    plt.grid(which='both', ls='-', color='#D9D9D9', lw=0.5)
 
     # Adjust label sizes
     plt.tick_params(axis='both', which='major', labelsize=6)
     plt.tick_params(axis='both', which='minor', labelsize=6)
 
-    # Add a legend to the plot
-    plt.legend(loc='upper right', fontsize=6)
+    # Add a custom legend to the plot
+    legend_elements = [Line2D([], [], label=f'Threshold {threshold}',
+                              color=f'C{i}', marker=markers(i), ls='None',
+                              mew=0.5, ms=3)
+                       for i, threshold in enumerate(thresholds)]
+    plt.legend(handles=legend_elements, loc='upper right',
+               fontsize=6, framealpha=1)
 
     # Adjust the plot size
     plt.tight_layout()
     width = 8.6 / 2.54 / 1.025
-    fig.set_size_inches(width, width, forward=True)
+    fig.set_size_inches(width, 2 / 3 * width, forward=True)
 
     # Construct path for this plot file
     plots_dir = './plots'
