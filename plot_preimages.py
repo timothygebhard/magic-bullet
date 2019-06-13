@@ -117,7 +117,7 @@ if __name__ == '__main__':
         # Add labels to the axes
         axes[0].set_ylabel('H1', labelpad=2, fontsize=6)
         axes[1].set_ylabel('L1', labelpad=2, fontsize=6)
-        axes[2].set_xlabel('Time (in seconds)', labelpad=2, fontsize=6)
+        axes[2].set_xlabel('Time from center (s)', labelpad=2, fontsize=6)
         axes[2].set_ylabel('CNN', labelpad=2, fontsize=6)
 
         # Adjust label sizes and x-limits
