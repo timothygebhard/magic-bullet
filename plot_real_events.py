@@ -141,7 +141,7 @@ if __name__ == '__main__':
             axes[i].tick_params(axis='both', which='minor', labelsize=6)
 
         # Add a legend to the prediction panel
-        axes[2].legend(loc='center left', fontsize=6)
+        axes[2].legend(loc='center left', fontsize=6, framealpha=1)
     
         plt.subplots_adjust(hspace=0)
         fig.align_ylabels(axes)
