@@ -1,13 +1,12 @@
 # CNNs: A Magic Bullet for GW Detection?
 
-
 [![Python](https://img.shields.io/badge/Python-3.6-yellow.svg)]()
 [![CodeFactor](https://www.codefactor.io/repository/github/timothygebhard/magic-bullet/badge)](https://www.codefactor.io/repository/github/timothygebhard/magic-bullet)
 [![GPLv3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://github.com/timothygebhard/magic-bullet/blob/master/LICENSE)
 [![arXiv](https://img.shields.io/badge/arXiv-1904.08693-red.svg)](https://arxiv.org/abs/1904.08693)
 [![DOI](https://zenodo.org/badge/180809281.svg)](https://zenodo.org/badge/latestdoi/180809281)
 
-This repository contains all scripts that were used to produce the results presented in [*Convolutional neural networks: a magic bullet for gravitational-wave detection?*](https://arxiv.org/abs/1904.08693) by Gebhard et al. (2019) [arXiv:1904.08693, to be submitted to Physical Review X].
+This repository contains all scripts that were used to produce the results presented in [*Convolutional neural networks: a magic bullet for gravitational-wave detection?*](https://arxiv.org/abs/1904.08693) by Gebhard et al. (2019) [arXiv:1904.08693].
 
 
 
@@ -70,7 +69,13 @@ In case you want to reproduce our analysis, you will need to run the following s
    python find_triggers.py
    ```
 
-   This creates a file `found_triggers.hdf` in the `./results` directory. Furthermore, it also outputs a global value (i.e., averaged over all injection SNRs) for the detection ratio and the false positive rate, and computes a value for how much the predicted event time deviates, on average, from the ground truth injection time.
+   This script will count the detections and false positives for different values of ∆t, that is, the width of the interval around the ground truth injection time within which a prediction is still counted as a detection. The values for this can be defined in the `CONFIG.json` file, where this parameter is called `slack_width` (because ∆t seemed a little generic).
+
+   The `find_triggers.py` script creates a file `found_triggers.hdf` in the `./results` directory, containing a group of results for each value of ∆t. Each such group again contains three groups: 
+
+   * `figures_of_merit`: The attributes of this group hold the global values (i.e., averaged over all injection SNRs) for the detection ratio, the false alarm ratio, the (inverse) false positive rate, as well as the mean and standard deviation for the deviation between the predicted event time and the ground truth injection time. These values are also written to the command line by `find_triggers.py`.
+   * `injection`: Results for examples that _do_ contain an injection, consisting of three data sets, namely `detected`, `false_positives` and `injection_snr`.
+   * `noise`: Results for examples that _do not_ contain an injection, consisting of only one data set, namely `false_positives`.
 
 7. Now you can compute the detection ratio as a function of the injection SNR, and check how the post-processing parameters (smoothing window size and thresholding value) affect the detection ratio and the (inverse) false positive rate. To this end, run the following two scripts:
 
@@ -81,11 +86,12 @@ In case you want to reproduce our analysis, you will need to run the following s
 
    This will create two files in the `./results` directory, named `dr_over_snr.json` and `dr_over_ifpr.json`.
 
-8. Using these JSON files, you can then plot the results from the last step by running the following:
+8. Using these JSON files (as well as the `found_triggers.hdf` file from step 6), you can then plot the results from the last step by running the following:
 
    ```
    python plot_dr_over_snr.py
    python plot_dr_over_ifpr.py
+   python plot_ifpr_over_delta_t.py
    ```
 
    The resulting plots will be saved as PDF files in the `./plots` directory.
