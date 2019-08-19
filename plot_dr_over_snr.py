@@ -104,7 +104,7 @@ if __name__ == '__main__':
     # Add a custom legend
     legend_elements = [Line2D([], [], ls='-', ms=2, mew=0.5, lw=1.0,
                               color=f'C{i}', marker=markers(i),
-                              label=r'$\Delta$t = ' + f'{slack_width:.3f}')
+                              label=r'$\Delta$t = ' + f'{slack_width:.3f}s')
                        for i, slack_width in enumerate(slack_widths)]
     plt.legend(handles=legend_elements, loc='lower right',
                fontsize=6, framealpha=1)
