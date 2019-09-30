@@ -6,7 +6,7 @@
 [![arXiv](https://img.shields.io/badge/arXiv-1904.08693-red.svg)](https://arxiv.org/abs/1904.08693)
 [![DOI](https://zenodo.org/badge/180809281.svg)](https://zenodo.org/badge/latestdoi/180809281)
 
-This repository contains all scripts that were used to produce the results presented in [*Convolutional neural networks: a magic bullet for gravitational-wave detection?*](https://arxiv.org/abs/1904.08693) by Gebhard et al. (2019) [arXiv:1904.08693].
+This repository contains all scripts that were used to produce the results presented in [*Convolutional neural networks: a magic bullet for gravitational-wave detection?*](https://journals.aps.org/prd/abstract/10.1103/PhysRevD.100.063015) by Gebhard et al. (2019) [[arXiv:1904.08693](https://arxiv.org/abs/1904.08693)].
 
 
 
