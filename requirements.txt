@@ -3,6 +3,6 @@ matplotlib==3.0.3
 numpy==1.16.2
 pandas==0.24.2
 tensorboardX==1.6
-tensorflow==2.5.0
+tensorflow==2.5.1
 tqdm==4.31.1
 torch==1.0.1
